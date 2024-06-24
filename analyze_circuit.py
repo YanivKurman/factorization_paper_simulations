@@ -67,8 +67,8 @@ def generate_tasks_from_circuits(p_vec, d_vec, post_selection, task_name):
 def analyze(logical_ex: Logical_Experiment, p_vec, d_vec, post_selection:bool, task_name: str= ' '):
     samples = sinter.collect(
         num_workers=5,
-        max_shots=20_000_000,
-        max_errors=500,
+        max_shots=30_000_000,
+        max_errors=1200,
         tasks=generate_tasks(logical_ex, p_vec, d_vec, post_selection, task_name=task_name),
         decoders=['pymatching'],
     )

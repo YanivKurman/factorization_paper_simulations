@@ -9,6 +9,9 @@ from compiler import compile_ex
 from physical_level_infrastructure import ErrorModel
 
 task_size=np.array([11,12,39,15,15,28,30,5,16,53,75,2.5,4.5])
+avg_size=task_size.mean()
+median=np.median(task_size)
+
 p_vec=[0.001,0.003,0.005,0.007]
 d_vec=[3,5,7,9]
 
