@@ -20,15 +20,15 @@ else: #load
         data = pickle.load(file)
 
     d3_errors=np.empty((len(p_vec), len(d_vec)))
-    for ind_p in range(len(p_vec)):
-        for ind_d in range(len(d_vec)):
-            indx=len(d_vec)*ind_p+ind_d
-            d3_errors[ind_p,ind_d]=data[indx].errors/data[indx].shots
-    print(d3_errors)
+    for indx in range(len(data)):
+        ind_p = p_vec.index(data[indx].json_metadata['p'])
+        ind_d = d_vec.index(data[indx].json_metadata['d'])
+        d3_errors[ind_p, ind_d] = data[indx].errors / (data[indx].shots - data[indx].discards)
+
     if save_matrices:
         np.save('matrices/d3_errors_matrix.npy', d3_errors)
-        np.save('matrices/d3_p_vec.npy', p_vec)
-        np.save('matrices/d3_d_vec.npy', d_vec)
+        # np.save('matrices/d3_p_vec.npy', p_vec)
+        # np.save('matrices/d3_d_vec.npy', d_vec)
 
 # # Load the matrix from the file
 # loaded_matrix = np.load('d3_errors_matrix.npy')

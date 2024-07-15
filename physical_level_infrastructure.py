@@ -153,7 +153,7 @@ class BaseSurface(abc.ABC):
                 error_model.generate_two_qubit_error(circ, qubits)
 
 
-    def stabilizer_round(self, circ, epoch: int, measurements: list, error_model: BaseErrorModel):
+    def stabilizer_round(self, circ: stim.Circuit, epoch: int, measurements: list, error_model: BaseErrorModel):
         ancillas = self._all_active_ancillas()
         data_qubits = self.data_qubits.flatten()
         if epoch == 0:

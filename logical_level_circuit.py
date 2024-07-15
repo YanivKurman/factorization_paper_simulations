@@ -5,13 +5,13 @@ def build_factorization_circuit():
 
     logical_ex = Logical_Experiment(width=5, height=5, logical_qubits=5)
     # T=0
-    logical_ex.logical_init(32, InitialState.S, 0)
+    logical_ex.logical_init(32, InitialState.S, logical_qubit=0)
     logical_ex.CNOT(32, 21, 31, CnotOrder.ZZXX, 0, 3, epoch=0, logical_tick=0)
     logical_ex.tick()
 
     # T=1
     logical_ex.CNOT(32, 21, 31, CnotOrder.ZZXX, 0, 3, epoch=1, logical_tick=0)
-    logical_ex.logical_init(21, InitialState.S_DAG, 3)
+    logical_ex.logical_init(21, InitialState.S_DAG, logical_qubit=3)
     logical_ex.tick()
 
     # T=2
@@ -57,7 +57,7 @@ def build_factorization_circuit():
     logical_ex.S_DAG_gate(11, 10, 3, epoch=1, logical_tick=4)
     logical_ex.CNOT(22, 10, 21, CnotOrder.ZZXX, 2, 3, epoch=3, logical_tick=3)
     logical_ex.CNOT(33, 22, 32, CnotOrder.ZZXX, 0, 2, epoch=3, logical_tick=4)
-    logical_ex.Teleportation(33, 23, TeleportationType.XX, 0, epoch=2, logical_tick=5)
+    logical_ex.Teleportation(33, 23, TeleportationType.XX, logical_qubit=0, epoch=2, logical_tick=5)
     logical_ex.tick()
 
     # T=9

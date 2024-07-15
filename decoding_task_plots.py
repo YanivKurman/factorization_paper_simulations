@@ -1,7 +1,6 @@
 import numpy as np
 from logical_level_circuit import build_memory_18d3
 import pickle
-import sinter
 import matplotlib.pyplot as plt
 import numpy as np
 from IR_level_infrastructure import Logical_Experiment

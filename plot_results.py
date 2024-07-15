@@ -7,7 +7,7 @@ print_results=True
 plot_results_error_vs_d=True
 plot_results_error_vs_p=True
 
-file_path = 'results/fact_circuit_PS=False.pkl' # Replace 'your_file.pkl' with the path to your .pkl file
+file_path = 'results/Memory.pkl' # Replace 'your_file.pkl' with the path to your .pkl file
 with open(file_path, 'rb') as file:
     # Load the object from the file
     data = pickle.load(file)
