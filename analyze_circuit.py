@@ -128,101 +128,149 @@ def analyze_from_circ(p_vec, d_vec, post_selection:bool, task_name: str= ' '):
     # with open(task_name+'.pkl', 'rb') as f: #load results
     #     loaded_tasks_stats = pickle.load(f)
 
-##
-from physical_level_infrastructure import Experiment
-from IR_level_infrastructure import Logical_Experiment
-def get_num_measurements(ex: Experiment):
-    return ex.circ.num_measurements
+## resource extraction
 
-def get_num_logical_measurements(ex: Experiment):
-    return len(ex.logical_measurements)
+import stim
+from logical_level_circuit import build_factorization_circuit
 
-def get_num_qubits(ex: Experiment):
-    return len(ex.physical_qubits)
 
-def get_num_detectors(ex: Experiment):
-    return ex.circ.num_detectors
+def get_num_measurements(circ: stim.Circuit):
+    return circ.num_measurements
 
-def total_stabilizer_rounds(ex: Experiment,logical_ex:Logical_Experiment):
+
+def get_num_qubits(circ: stim.Circuit):
+    qubits = set()
+    for operation in circ:
+        if operation.name in ['R', 'RX']:  # Assuming 'R' is the restart operation
+            for target in operation.targets_copy():
+                if target.is_qubit_target:
+                    qubits.add(target.value)
+    return len(qubits)
+
+
+def get_num_detectors(circ: stim.Circuit):
+    return circ.num_detectors
+
+
+def get_max_active_qubits(circuit: stim.Circuit) -> int:
+    active_qubits = set()
+    max_active = 0
+
+    for operation in circuit:
+        if operation.name == 'R':  # Assuming 'R' is the restart operation (initialization)
+            for target in operation.targets_copy():
+                if target.is_qubit_target:
+                    active_qubits.add(target.value)
+        elif operation.name == 'M':  # Assuming 'M' is the measurement operation
+            for target in operation.targets_copy():
+                if target.is_qubit_target:
+                    active_qubits.discard(target.value)
+
+        # Update the maximum number of active qubits
+        max_active = max(max_active, len(active_qubits))
+
+    return max_active
+
+
+def get_max_parallel_measurements(circuit: stim.Circuit) -> int:
+    current_measurements = 0
+    max_measurements = 0
+
+    for operation in circuit:
+        if operation.name == 'M':  # Assuming 'M' is the measurement operation
+            current_measurements += len([target for target in operation.targets_copy() if target.is_qubit_target])
+        elif operation.name == 'TICK':
+            # Update the maximum count and reset the current count
+            max_measurements = max(max_measurements, current_measurements)
+            current_measurements = 0
+
+    # Final check in case the circuit does not end with a 'TICK'
+    max_measurements = max(max_measurements, current_measurements)
+
+    return max_measurements
+
+
+def max_two_qubit_gates(circuit: stim.Circuit) -> int:
+    current_two_qubit_gates = 0
+    max_two_qubit_gates = 0
+
+    for operation in circuit:
+        if operation.name in {'CX', 'CZ'}:  # Check for two-qubit gates
+            current_two_qubit_gates += len(
+                operation.targets_copy()) // 2  # Each target pair represents a two-qubit gate
+        elif operation.name == 'TICK':
+            # Update the maximum count and reset the current count
+            max_two_qubit_gates = max(max_two_qubit_gates, current_two_qubit_gates)
+            current_two_qubit_gates = 0
+
+    # Final check in case the circuit does not end with a 'TICK'
+    max_two_qubit_gates = max(max_two_qubit_gates, current_two_qubit_gates)
+
+    return max_two_qubit_gates
+
+
+def total_stabilizer_rounds(logical_ex: Logical_Experiment, d):
     tick_count = 0
     for ops in logical_ex.circ:
         if ops.name == 'TICK':
             tick_count += 1
-    d = len(ex.logical_measurements[-1][0])
-    return d * (tick_count+1)
+    return d * (tick_count + 1)
 
 
-def get_avg_data_creation_rate(ex: Experiment, logical_ex: Logical_Experiment):
-    return get_num_measurements(ex) / total_stabilizer_rounds(ex, logical_ex)
+def get_avg_data_creation(circ: stim.Circuit, logical_ex: Logical_Experiment, d) -> int:
+    return get_num_measurements(circ) / total_stabilizer_rounds(logical_ex, d)
 
-def get_avg_alive_surface(logical_ex: Logical_Experiment):
-    blocks=get_nFT_d3_blocks(logical_ex)+get_FT_d3_blocks(logical_ex)
-    end_tick = max([index for index, element in enumerate(logical_ex.activated_qubits) if element != []])+1
-    return blocks/end_tick
-
-def get_max_parallel_CNOTS(ex: Experiment,logical_ex:Logical_Experiment):
-    d=len(ex.logical_measurements[-1][0])
-    max_surfaces=get_max_activated_surfaces(logical_ex)
-    return max_surfaces*(d*(d-1))
-def get_max_parallel_measurements(ex: Experiment,logical_ex:Logical_Experiment):
-    largest_meas=0
-    lists=logical_ex.activated_qubits
-    # Iterate through the list of lists, except the last element
-    for i in range(len(lists) - 1):
-        # Calculate the absolute difference in length between neighboring lists
-        meas = len(lists[i]) - len(lists[i+1])+len(lists[i])
-        # Update the largest difference if the current difference is greater
-        if meas > largest_meas:
-            largest_meas = meas
-            largest_tick=i
-    d = len(ex.logical_measurements[-1][0])
-    return d**2*(len(lists[largest_tick]) - len(lists[largest_tick+1]))+len(lists[largest_tick])*(d**2-1)
-
-def get_max_activated_surfaces(logical_ex: Logical_Experiment):
-    return max([len(sublist) for sublist in logical_ex.activated_qubits])
-def get_frame_propagations(logical_ex: Logical_Experiment):
-    return len(logical_ex.frame_propagation)
 
 def get_nFT_d3_blocks(logical_ex: Logical_Experiment):
-    count=0
+    count = 0
     for inst in logical_ex.circ:
-        if inst.name in {'S','S_DAG'}:
-            count+=len(inst.targets_copy())
+        if inst.name in {'S', 'S_DAG'}:
+            count += len(inst.targets_copy())
     return count
 
+
 def get_FT_d3_blocks(logical_ex: Logical_Experiment):
-    surfaces=logical_ex.activated_qubits
-    blocks=len(surfaces[0])
-    for i in range(1,len(surfaces) - 1):
-        set1 = set(surfaces[i-1])
+    surfaces = logical_ex.activated_qubits
+    blocks = len(surfaces[0])
+    for i in range(1, len(surfaces) - 1):
+        set1 = set(surfaces[i - 1])
         set2 = set(surfaces[i])
-        blocks+=len(surfaces[i])+len(set1.difference(set2))
-    return blocks-get_nFT_d3_blocks(logical_ex)
+        blocks += len(surfaces[i]) + len(set1.difference(set2))
+    return blocks - get_nFT_d3_blocks(logical_ex)
 
 
-
-def get_resources(ex: Experiment, logical_ex: Logical_Experiment): #need to verify!!
+def get_resources(task_name, d):
+    filename = f"circuits\{task_name}_d={d}_p=0.001.stim"
+    with open(filename, "r") as f:
+        circ = stim.Circuit(f.read())
+    logical_ex = build_factorization_circuit()
     ex_resources = {
-        'num_measurements': get_num_measurements(ex),
-        'num_physical_qubits': get_num_qubits(ex),
-        'num_graph_nodes': get_num_detectors(ex),
-        'num_logical_measurements': get_num_logical_measurements(ex),
-        'total_rounds': total_stabilizer_rounds(ex, logical_ex),
-        'avg_data_creation_rate [bit/round]': get_avg_data_creation_rate(ex, logical_ex),
-        'avg_alive_surface': get_avg_alive_surface(ex, logical_ex),
-        'max_parallel_cnots': get_max_parallel_CNOTS(ex, logical_ex),  # this does not include surgery CNOTS
-        'max_parallel_measurements': get_max_parallel_measurements(ex, logical_ex),  # this does not include surgery measurements
-        'num_frame_propagation_gates': get_frame_propagations(logical_ex),
+        'num_physical_qubits': get_num_qubits(circ),
+        'max_active_qubits': get_max_active_qubits(circ),
+        'max_parallel_measurements': get_max_parallel_measurements(circ),
+        'max_parallel_cnots': max_two_qubit_gates(circ),  # this does not include surgery CNOTS
+        'num_measurements': get_num_measurements(circ),
+        'num_graph_nodes': get_num_detectors(circ),
+        'avg_data_creation_rate [bit/round]': get_avg_data_creation(circ, logical_ex, d),
+        'total_stab_rounds': total_stabilizer_rounds(logical_ex, d),
         'num_FT_d3_blocks': get_FT_d3_blocks(logical_ex),
         'num_nFT_d3_blocks': get_nFT_d3_blocks(logical_ex),
     }
     return ex_resources
+## extract resources
+d_vec = [3, 5, 7, 9]
 
+for d in d_vec:
+    print(get_resources('fact_circuit', d))
 ## cxreates interactive circuit
 import webbrowser
-def create_interactive_html(exp: Experiment,task_name: str= ' '):
-    html_content = exp.circ.diagram('interactive-html')._repr_html_()
-    file_name = task_name+'interactive.html'
+import stim
+def create_video(task_name, d):
+    filename = f"circuits\{task_name}_d={d}_p=0.001.stim"
+    with open(filename, "r") as f:
+        circ = stim.Circuit(f.read())
+    html_content = circ.diagram('interactive-html')._repr_html_()
+    file_name = task_name+f'_{d}_interactive.html'
     with open(file_name, 'w', encoding='utf-8') as html_file:
         html_file.write(html_content)
     webbrowser.open(file_name)
