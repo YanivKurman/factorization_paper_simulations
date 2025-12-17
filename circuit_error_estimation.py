@@ -65,7 +65,7 @@ axs[0, 1].set_xlabel('p')
 axs[0, 1].set_ylabel('Value')
 axs[0, 1].legend()
 axs[0, 1].set_yscale('log')  # Add log scale to y-axis
-
+axs[0, 1].set_xscale('log')  # Add log scale to y-axis
 # Plot nFT_mat
 # nFT_mat with x-axis as d
 for i, row in enumerate(nFT_mat):
@@ -84,6 +84,7 @@ axs[1, 1].set_xlabel('p')
 axs[1, 1].set_ylabel('Value')
 axs[1, 1].legend()
 axs[1, 1].set_yscale('log')  # Add log scale to y-axis
+axs[1, 1].set_xscale('log')  # Add log scale to y-axis
 
 # Plot total_mat
 # total_mat with x-axis as d
@@ -103,6 +104,7 @@ axs[2, 1].set_xlabel('p')
 axs[2, 1].set_ylabel('Value')
 axs[2, 1].legend()
 axs[2, 1].set_yscale('log')  # Add log scale to y-axis
+axs[2, 1].set_xscale('log')  # Add log scale to y-axis
 
 # Adjust layout
 plt.tight_layout()

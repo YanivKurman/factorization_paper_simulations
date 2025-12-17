@@ -4,7 +4,7 @@ import pickle
 import numpy as np
 
 run_simulation=False
-save_matrices=True
+save_matrices=False
 p_vec = [0.001, 0.003, 0.005, 0.008, 0.01]
 d_vec = [3, 5, 7, 9]
 
