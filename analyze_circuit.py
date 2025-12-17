@@ -264,8 +264,8 @@ for d in d_vec:
     print(get_resources('fact_circuit', d))
 ## cxreates interactive circuit
 import webbrowser
-import stim
-def create_video(task_name, d):
+
+def create_crumble(task_name, d):
     filename = f"circuits\{task_name}_d={d}_p=0.001.stim"
     with open(filename, "r") as f:
         circ = stim.Circuit(f.read())
@@ -275,7 +275,6 @@ def create_video(task_name, d):
         html_file.write(html_content)
     webbrowser.open(file_name)
 ## count gates
-import stim
 filename = "circuits/fact_circuit_d=5_p=0.001.stim"
 with open(filename, "r") as f:
     circuit = stim.Circuit(f.read())
